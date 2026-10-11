@@ -20,6 +20,7 @@ message("CUDA_ARCH=${CUDA_ARCH}")
 option(USE_AVX "Enable AVX acceleration" OFF)
 option(USE_AVX512 "Enable AVX512 (and AVX) acceleration" OFF)
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_BENCH "Build CPU benchmarks (only with USE_CUDA=OFF)" OFF)
 option(BUILD_MSM "Include msm" OFF)
 option(G2_ENABLED "Enable G2" OFF) # whether enable msm on G2 curve; it takes very long to build; OFF by default
 
@@ -228,6 +229,22 @@ if(USE_AVX512)
     target_compile_definitions(${LIB_CXX_NAME} PRIVATE __USE_AVX__ __AVX512__ __NO_GMP__)
     target_compile_options(${LIB_CXX_NAME} PRIVATE -march=native)
 endif()
+
+# Benchmarks target
+if (BUILD_BENCH)
+add_executable(bench_merkle_cpu.exe tests/bench_merkle_cpu.cpp)
+target_link_libraries(bench_merkle_cpu.exe PRIVATE ${LIB_CXX_NAME})
+target_include_directories(bench_merkle_cpu.exe PRIVATE ${LIB_INC})
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(bench_merkle_cpu.exe PRIVATE OpenMP::OpenMP_CXX)
+endif()
+if(USE_AVX)
+    target_compile_definitions(bench_merkle_cpu.exe PRIVATE __USE_AVX__)
+endif()
+if(USE_AVX512)
+    target_compile_definitions(bench_merkle_cpu.exe PRIVATE __USE_AVX__ __AVX512__)
+endif()
+endif() # BUILD_BENCH
 
 # Tests target
 if (BUILD_TESTS)
